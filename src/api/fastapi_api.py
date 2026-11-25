@@ -10,23 +10,35 @@ Then the Streamlit app (streamlit_app.py) will call this service for every revie
 """
 
 import os
+from functools import lru_cache
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from typing import Literal
 
 load_dotenv()
-client = genai.Client()
-app = FastAPI()
+app = FastAPI(title="Customer Feedback Analyzer", version="1.0")
+
+
+@lru_cache
+def get_genai_client() -> genai.Client:
+    return genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 # Welcome message 
 @app.get("/")
 def home():
     return {"message": "Welcome To Customer Review API"}
+
+
+@app.get("/health")
+def health():
+    """Report service readiness without exposing configuration values."""
+    configured = bool(os.getenv("GOOGLE_API_KEY"))
+    return {"status": "ready" if configured else "degraded", "api_key_configured": configured}
 
 
 # What the caller must SEND us
@@ -51,13 +63,14 @@ class Analysis(BaseModel):
     suggestion: str
 
 
-@app.post("/analyze")
+@app.post("/analyze", response_model=Analysis)
 def analyze(review: Review):
-    if not os.getenv("GOOGLE_API_KEY"):
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
         raise HTTPException(status_code=503, detail="GOOGLE_API_KEY is not configured.")
 
     try:
-        response = client.models.generate_content(
+        response = get_genai_client().models.generate_content(
             model="gemini-3.1-flash-lite",
             contents=(
                 "Analyze this customer review.\n"

@@ -13,8 +13,9 @@ from typing import Iterable, Mapping
 DB_FILE = Path(__file__).resolve().parents[2] / "feedback.db"
 
 
-def init_db():
+def init_db() -> None:
     """Create the feedback table the first time we run."""
+    DB_FILE.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS feedback (

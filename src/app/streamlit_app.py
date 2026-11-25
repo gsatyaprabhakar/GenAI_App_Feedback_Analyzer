@@ -42,7 +42,7 @@ if uploaded_file is not None:
     upload_id = f"{uploaded_file.name}:{uploaded_file.size}"
     if st.session_state.get("_loaded_upload_id") != upload_id:
         try:
-            st.session_state.reviews_text = uploaded_file.getvalue().decode("utf-8")
+            st.session_state.reviews_text = uploaded_file.getvalue().decode("utf-8-sig")
             st.session_state._loaded_upload_id = upload_id
         except UnicodeDecodeError:
             st.warning("Please choose a UTF-8 encoded text file.")
@@ -59,11 +59,15 @@ if st.button("Analyze"):
     else:
         results = []
         # Go through each review and ask our backend to analyze it.
+        progress = st.progress(0)
         for review in reviews:
+            index = len(results)
             try:
                 response = requests.post(API_URL, json={"text": review}, timeout=30)
                 response.raise_for_status()
                 data = response.json()
+                if set(("label", "score", "theme")) - data.keys():
+                    raise ValueError("The API returned an incomplete analysis.")
                 results.append({
                     "review": review,
                     "label": data["label"],
@@ -71,7 +75,8 @@ if st.button("Analyze"):
                     "theme": data["theme"],
                     "suggestion": data.get("suggestion", ""),
                 })
-            except (requests.RequestException, ValueError, KeyError, TypeError):
+            except requests.RequestException:
+                st.toast(f"Analysis request failed: {review[:40]}...")
                 # One bad review should not stop the whole batch.
                 results.append({
                     "review": review,
@@ -80,6 +85,15 @@ if st.button("Analyze"):
                     "theme": "error",
                     "suggestion": "",
                 })
+            except (ValueError, KeyError, TypeError):
+                results.append({
+                    "review": review,
+                    "label": "error",
+                    "score": 0,
+                    "theme": "error",
+                    "suggestion": "",
+                })
+            progress.progress((index + 1) / len(reviews))
 
         # Save results in session_state so they survive button clicks.
         st.session_state.results = results

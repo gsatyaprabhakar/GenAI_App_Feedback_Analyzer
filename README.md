@@ -21,6 +21,11 @@ Put your Gemini key in a `.env` file:
 GOOGLE_API_KEY=your_key_here
 ```
 
+Install dependencies from the project root:
+```bash
+python -m pip install -r requirements.txt
+```
+
 ---
 
 ## Step 2: The backend (`src/api/fastapi_api.py`)
