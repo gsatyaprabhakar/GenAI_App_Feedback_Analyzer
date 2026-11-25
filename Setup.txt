@@ -1,0 +1,25 @@
+Execute in VS Code Terminal with Command Prompt mode
+
+
+# Creates environment
+uv venv
+
+
+# Activate environment
+.venv\Scripts\activate
+
+
+python -m ensurepip --upgrade
+python -m pip install --upgrade pip
+
+python -m pip install google-genai
+
+python -m pip install streamlit
+
+python -m pip install "fastapi[standard]"
+
+
+
+python -m pip install -r requirements.txt
+
+python -m pip freeze > requirements.txt
