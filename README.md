@@ -1,4 +1,4 @@
-# Project 1: Customer Feedback Analyzer (Gen AI)
+# Customer Feedback Analyzer (Gen AI)
 
 **The problem:** A restaurant owner has dozens of customer reviews and no time to read them all. They want a simple tool: paste the reviews, click a button, and instantly see how customers feel and what they keep complaining about.
 
